@@ -142,8 +142,6 @@ jQuery(function ($) {
     function handleAjaxSuccess(response) {
         if (!response.success) return;
 
-        console.log(response.data)
-
         // حذف محتوای قبلی
         $('.product-content-section .woocommerce-pagination, .product-content-section ul.products, ' +
             '.product-content-section .woocommerce-no-products-found, .product-content-section .page-not-found').remove();
@@ -262,6 +260,14 @@ jQuery(function ($) {
                     $('.min-price').val(value[0]);
                     $('.max-price').val(value[1]);
                     state.filters.price = value;
+
+                    // به‌روزرسانی اسلایدر با استفاده از نمونه موجود
+                    if (window.priceSliderInstance) {
+                        window.priceSliderInstance.currentMin = parseInt(value[0]);
+                        window.priceSliderInstance.currentMax = parseInt(value[1]);
+                        window.priceSliderInstance.updateSlider();
+                        window.priceSliderInstance.updateInputs();
+                    }
                 }
             },
             category: function (value) {
@@ -416,10 +422,22 @@ jQuery(function ($) {
         // حالت خاص برای فیلتر قیمت
         if (filterKey === 'price') {
             delete state.filters.price;
-            $('.min-price').val('');
-            $('.max-price').val('');
-            $('.slider-track').css('width', '0');
-            $('.slider-thumb').css(this.isRTL ? 'right' : 'left', '0');
+
+            // بازنشانی به مقادیر اولیه
+            const priceRange = nader_woocommerce_ajax_filters.price_range;
+            const minPrice = priceRange.min;
+            const maxPrice = priceRange.max;
+
+            $('.min-price').val(minPrice);
+            $('.max-price').val(maxPrice);
+
+            // بازنشانی اسلایدر
+            if (window.priceSliderInstance) {
+                window.priceSliderInstance.currentMin = minPrice;
+                window.priceSliderInstance.currentMax = maxPrice;
+                window.priceSliderInstance.updateSlider();
+                window.priceSliderInstance.updateInputs();
+            }
         } else if (Array.isArray(state.filters[filterKey])) {
             const index = state.filters[filterKey].indexOf(value);
             if (index !== -1) {
@@ -477,7 +495,22 @@ jQuery(function ($) {
         // بازنشانی UI
         $('.nader-woocommerce-ajax-filters select').val('').trigger('change.select2');
         $('.nader-woocommerce-ajax-filters input[type="checkbox"]').prop('checked', false);
-        $('.min-price, .max-price').val('');
+
+        // بازنشانی قیمت به مقادیر اولیه
+        const priceRange = nader_woocommerce_ajax_filters.price_range;
+        const minPrice = priceRange.min;
+        const maxPrice = priceRange.max;
+
+        $('.min-price').val(minPrice);
+        $('.max-price').val(maxPrice);
+
+        // بازنشانی اسلایدر
+        if (window.priceSliderInstance) {
+            window.priceSliderInstance.currentMin = minPrice;
+            window.priceSliderInstance.currentMax = maxPrice;
+            window.priceSliderInstance.updateSlider();
+            window.priceSliderInstance.updateInputs();
+        }
 
         applyFilter();
     }

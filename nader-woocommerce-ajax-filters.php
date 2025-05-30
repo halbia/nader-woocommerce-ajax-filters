@@ -10,7 +10,6 @@ Text Domain: nader
 
 class Nader_Woocommerce_Ajax_Filters{
     private $shop_slug;
-    private $filter_order = ['price', 'category', 'brand', 'attribute', 'rating', 'stock', 'orderby', 'page'];
     private $filter_types = [
         'page'      => [
             'type' => 'page',
@@ -254,11 +253,12 @@ class Nader_Woocommerce_Ajax_Filters{
     public function enqueue_assets()
     {
         if (is_shop() || is_product_category()) {
+            wp_enqueue_script('nader-woocommerce-ajax-filters-price-slider', plugins_url('assets/price-slider.js', __FILE__), ['jquery'], '4.0', true);
             wp_enqueue_script('nader-woocommerce-ajax-filters', plugins_url('assets/filters.js', __FILE__), [
                 'jquery',
-                'select2'
+                'select2',
+                'nader-woocommerce-ajax-filters-price-slider'
             ], '4.0', true);
-            wp_enqueue_script('nader-woocommerce-ajax-filters-price-slider', plugins_url('assets/price-slider.js', __FILE__), ['jquery'], '4.0', true);
 
             wp_localize_script('nader-woocommerce-ajax-filters', 'nader_woocommerce_ajax_filters', [
                 'ajaxurl'     => admin_url('admin-ajax.php'),
