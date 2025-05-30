@@ -147,6 +147,8 @@ jQuery(function ($) {
         // اضافه کردن محتوای جدید
         $('.product-content-section').append(response.data.html);
 
+        updateSelectedFiltersDisplay();
+
         // به‌روزرسانی صفحه‌بندی
         updatePagination(response.data);
 
@@ -320,6 +322,159 @@ jQuery(function ($) {
         });
     }
 
+    // تابع جدید برای نمایش فیلترهای انتخاب شده
+    function updateSelectedFiltersDisplay() {
+        const $container = $('.selected-filters-container');
+        const $clearAllBtn = $('.clear-all-filters');
+        $container.empty();
+
+        let hasFilters = false;
+
+        // نمایش فیلترهای انتخاب شده
+        Object.keys(state.filters).forEach(filterKey => {
+            const values = state.filters[filterKey];
+            if (!values || (Array.isArray(values) && values.length === 0)) return;
+
+            hasFilters = true;
+            const filterName = getFilterName(filterKey);
+
+            if (Array.isArray(values)) {
+                values.forEach(value => {
+                    const displayValue = getFilterValueDisplay(filterKey, value);
+                    $container.append(createFilterTag(filterKey, value, filterName, displayValue));
+                });
+            } else {
+                const displayValue = getFilterValueDisplay(filterKey, values);
+                $container.append(createFilterTag(filterKey, values, filterName, displayValue));
+            }
+        });
+
+        // نمایش/پنهان کردن دکمه حذف همه
+        $clearAllBtn.toggle(hasFilters);
+    }
+
+    // تابع جدید برای ایجاد تگ فیلتر
+    function createFilterTag(filterKey, value, filterName, displayValue) {
+        return $(`
+        <div class="filter-tag" data-filter-key="${filterKey}" data-filter-value="${value}">
+            <span>${filterName}: ${displayValue}</span>
+            <span class="remove-filter cursor-pointer">&times;</span>
+        </div>
+    `);
+    }
+
+    // تابع جدید برای گرفتن نام نمایشی فیلتر
+    function getFilterName(filterKey) {
+        const filterNames = {
+            'price': 'Price',
+            'category': 'Category',
+            'brand': 'Brand',
+            'orderby': 'Sort by',
+            'rating': 'Rating',
+            'stock': 'Stock',
+            'attribute-cpu': 'CPU',
+            'attribute-color': 'Color'
+        };
+
+        // برای attributeهای داینامیک
+        if (filterKey.startsWith('attribute-') && !filterNames[filterKey]) {
+            return filterKey.replace('attribute-', '').toUpperCase();
+        }
+
+        return filterNames[filterKey] || filterKey;
+    }
+
+    // تابع جدید برای گرفتن مقدار نمایشی فیلتر
+    function getFilterValueDisplay(filterKey, value) {
+        if (filterKey === 'orderby') {
+            const orderNames = {
+                'menu_order': 'Default',
+                'popularity': 'Popularity',
+                'rating': 'Rating',
+                'date': 'Newest',
+                'price': 'Price: Low to High',
+                'price-desc': 'Price: High to Low'
+            };
+            return orderNames[value] || value;
+        }
+
+        if (filterKey === 'stock') {
+            const stockNames = {
+                'in-stock': 'In Stock',
+                'out-of-stock': 'Out of Stock',
+                'on-backorder': 'On Backorder'
+            };
+            return stockNames[value] || value;
+        }
+
+        return value;
+    }
+
+// تابع جدید برای حذف فیلتر
+    function removeFilter(filterKey, value) {
+        if (Array.isArray(state.filters[filterKey])) {
+            const index = state.filters[filterKey].indexOf(value);
+            if (index !== -1) {
+                state.filters[filterKey].splice(index, 1);
+            }
+
+            if (state.filters[filterKey].length === 0) {
+                delete state.filters[filterKey];
+            }
+        } else {
+            delete state.filters[filterKey];
+        }
+
+        // به روز رسانی UI مربوطه
+        updateUIAfterFilterRemoval(filterKey, value);
+        applyFilter();
+    }
+
+// تابع جدید برای به روز رسانی UI پس از حذف فیلتر
+    function updateUIAfterFilterRemoval(filterKey, value) {
+        // برای selectها
+        if (filterKey === 'orderby' || filterKey === 'rating' || filterKey === 'stock') {
+            $(`select[data-filter-slug="${filterKey}"]`).val('').trigger('change.select2');
+        }
+        // برای selectهای چندگانه
+        else if (filterKey === 'category') {
+            const currentValues = $(`#${filterKey}-filter`).val() || [];
+            const newValues = currentValues.filter(v => v !== value);
+            $(`#${filterKey}-filter`).val(newValues).trigger('change.select2');
+        }
+        // برای checkboxها
+        else {
+            $(`input[data-filter-slug="${filterKey}"][value="${value}"]`).prop('checked', false);
+
+            // به روز رسانی state.selectedCheckboxes
+            if (state.selectedCheckboxes[filterKey]) {
+                const index = state.selectedCheckboxes[filterKey].indexOf(value);
+                if (index !== -1) {
+                    state.selectedCheckboxes[filterKey].splice(index, 1);
+                }
+
+                if (state.selectedCheckboxes[filterKey].length === 0) {
+                    delete state.selectedCheckboxes[filterKey];
+                }
+            }
+        }
+    }
+
+// تابع جدید برای حذف همه فیلترها
+    function clearAllFilters() {
+        // حذف از state
+        state.filters = {};
+        state.selectedCheckboxes = {};
+
+        // بازنشانی UI
+        $('.nader-woocommerce-ajax-filters select').val('').trigger('change.select2');
+        $('.nader-woocommerce-ajax-filters input[type="checkbox"]').prop('checked', false);
+        $('.min-price, .max-price').val('');
+
+        applyFilter();
+    }
+
+
     // مقداردهی اولیه
     initializeSelect2();
     handleSelectChanges();
@@ -328,4 +483,15 @@ jQuery(function ($) {
     handlePagination();
 
     $(window).on('load', applyFiltersFromUrl);
+
+    // در انتهای فایل، بعد از رویدادهای موجود، این رویدادها را اضافه کنید:
+    $(document).on('click', '.remove-filter', function() {
+        const $tag = $(this).closest('.filter-tag');
+        const filterKey = $tag.data('filter-key');
+        const filterValue = $tag.data('filter-value');
+        removeFilter(filterKey, filterValue);
+    });
+
+    $(document).on('click', '.clear-all-filters', clearAllFilters);
+
 });

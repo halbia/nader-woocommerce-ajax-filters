@@ -224,3 +224,48 @@ p.page-not-found {
   color:         #222;
   border-radius: 8px;
 }
+
+.nader-wc-ajax-filters-selected-filters {
+  .selected-filters-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 10px;
+  }
+
+  .filter-tag {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	background: #f0f0f0;
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-size: 12px;
+
+	.remove-filter {
+	  cursor: pointer;
+	  color: #999;
+	  font-weight: bold;
+	  font-size: 14px;
+
+	  &:hover {
+		color: #d33;
+	  }
+	}
+  }
+
+  .clear-all-filters {
+	margin-top: 10px;
+	background: none;
+	border: none;
+	color: #96588a;
+	text-decoration: underline;
+	cursor: pointer;
+	font-size: 12px;
+	padding: 0;
+
+	&:hover {
+	  color: #d33;
+	}
+  }
+}

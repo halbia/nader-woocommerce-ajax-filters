@@ -205,4 +205,42 @@ p.page-not-found {
   border-radius: 8px;
 }
 
+.nader-wc-ajax-filters-selected-filters .selected-filters-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.nader-wc-ajax-filters-selected-filters .filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.nader-wc-ajax-filters-selected-filters .filter-tag .remove-filter {
+  cursor: pointer;
+  color: #999;
+  font-weight: bold;
+  font-size: 14px;
+}
+.nader-wc-ajax-filters-selected-filters .filter-tag .remove-filter:hover {
+  color: #d33;
+}
+.nader-wc-ajax-filters-selected-filters .clear-all-filters {
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: #96588a;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+.nader-wc-ajax-filters-selected-filters .clear-all-filters:hover {
+  color: #d33;
+}
+
 /*# sourceMappingURL=filters.css.map */

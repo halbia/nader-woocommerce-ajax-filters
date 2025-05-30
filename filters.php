@@ -2,8 +2,19 @@
 defined('ABSPATH') || exit;
 ?>
 
+<div class="nader-woocommerce-ajax-filters filter-section nader-wc-ajax-filters-selected-filters" style="display: none;">
+    <label><?php esc_html_e('Selected filters', 'nader'); ?></label>
+    <div class="selected-filters-container"></div>
+    <button class="clear-all-filters" style="display: none;">
+        <?php esc_html_e('Clear all filters', 'nader'); ?>
+    </button>
+</div>
+
+
 <!-- Price Filter -->
 <div class="nader-woocommerce-ajax-filters filter-section nader-wc-ajax-filters-price-slider">
+    <label><?php esc_html_e('Price', 'nader'); ?></label>
+
     <div class="price-slider">
         <div class="slider-track"></div>
         <div class="slider-thumb min-thumb"></div>
@@ -15,6 +26,7 @@ defined('ABSPATH') || exit;
         <input type="number" class="max-price" placeholder="حداکثر" data-type="number">
     </div>
 </div>
+
 
 <div class="nader-woocommerce-ajax-filters filter-section">
     <label for="category-filter"><?php esc_html_e('Categories', 'nader'); ?></label>
