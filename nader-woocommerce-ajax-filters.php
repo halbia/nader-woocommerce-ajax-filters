@@ -128,8 +128,6 @@ class Nader_Woocommerce_Ajax_Filters{
             'orderby'  => ['type' => 'string'],
             'category' => ['type' => 'term_array', 'taxonomy' => 'product_cat'],
             'brand'    => ['type' => 'term_array', 'taxonomy' => 'product_brand'],
-            'cpu'      => ['type' => 'term_array', 'taxonomy' => 'pa_cpu'],
-            'color'    => ['type' => 'term_array', 'taxonomy' => 'pa_color'],
             'stock'    => ['type' => 'term_array', 'meta_key' => '_stock_status']
         ];
 
@@ -267,19 +265,52 @@ class Nader_Woocommerce_Ajax_Filters{
                 'shop_url'    => rtrim(get_permalink(wc_get_page_id('shop')), '/'),
                 'nonce'       => wp_create_nonce('nader_woocommerce_ajax_filters_nonce'),
                 'i18n'        => [
-                    'select2' => [
-                        'no_result' => __('No results found.', 'nader'),
-                        'choose'    => __('Select an option', 'nader'),
+                    // عمومی
+                    'common' => [
+                        'price'    => __('Price', 'nader'),
+                        'category' => __('Category', 'nader'),
+                        'brand'    => __('Brand', 'nader'),
+                        'rating'   => __('Rating', 'nader'),
                     ],
-                    'price' => __('Price', 'nader'),
-                    'category' => __('Category', 'nader'),
-                    'brand' => __('Brand', 'nader'),
-                    'orderby' => __('Sort by', 'nader'),
-                    'rating' => __('Rating', 'nader'),
-                    'stock' => __('Stock', 'nader'),
-                    'attribute_cpu' => __('CPU', 'nader'),
-                    'attribute_color' => __('Color', 'nader'),
-                    // سایر ترجمه‌های attributeها
+
+                    // مرتب‌سازی
+                    'sorting' => [
+                        'title'       => __('Sort by', 'nader'),
+                        'menu_order'  => __('Default sorting', 'nader'),
+                        'popularity'  => __('Sort by popularity', 'nader'),
+                        'rating'      => __('Sort by average rating', 'nader'),
+                        'date'        => __('Sort by latest', 'nader'),
+                        'price_asc'   => __('Sort by price: low to high', 'nader'),
+                        'price_desc'  => __('Sort by price: high to low', 'nader'),
+                    ],
+
+                    // وضعیت موجودی
+                    'stock' => [
+                        'title'        => __('Stock Status', 'nader'),
+                        'in_stock'     => __('In Stock', 'nader'),
+                        'out_of_stock' => __('Out of Stock', 'nader'),
+                        'on_backorder' => __('On Backorder', 'nader'),
+                    ],
+
+                    // ویژگی‌ها (Attributes)
+                    'attributes' => [
+                        'cpu'   => __('CPU', 'nader'),
+                        'color' => __('Color', 'nader'),
+                        // سایر ویژگی‌ها
+                    ],
+
+                    // پیام‌ها
+                    'messages' => [
+                        'clear_all' => __('Clear all filters', 'nader'),
+                        'selected'  => __('Selected filters', 'nader'),
+                        'no_result' => __('No results found', 'nader'),
+                    ],
+
+                    // Select2
+                    'select2' => [
+                        'placeholder' => __('Select an option', 'nader'),
+                        'no_results'  => __('No results found', 'nader'),
+                    ],
                 ],
                 'price_range' => $this->get_product_price_range()
             ]);
@@ -318,7 +349,7 @@ class Nader_Woocommerce_Ajax_Filters{
 
         return [
             'key'     => sanitize_key($config['key']),
-            'value'   => is_array($value) ? array_map('sanitize_text_field', $value) : sanitize_text_field($value),
+            'value'   => is_array($value) ? array_map('sanitize_text_field', $this->map_stock_values($value)) : sanitize_text_field($value),
             'compare' => $config['compare'],
             'type'    => $config['value_type']
         ];

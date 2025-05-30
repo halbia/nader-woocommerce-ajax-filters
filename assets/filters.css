@@ -224,7 +224,12 @@ p.page-not-found {
   cursor: pointer;
   color: #999;
   font-weight: bold;
-  font-size: 14px;
+  display: flex;
+  font-size: 16px;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
 }
 .nader-wc-ajax-filters-selected-filters .filter-tag .remove-filter:hover {
   color: #d33;

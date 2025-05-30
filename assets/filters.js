@@ -10,9 +10,9 @@ jQuery(function ($) {
         $('.filter-section select[multiple]').each(function () {
             $(this).select2({
                 width: '100%',
-                placeholder: $(this).data('placeholder') || nader_woocommerce_ajax_filters.i18n.select2.choose,
+                placeholder: $(this).data('placeholder') || nader_woocommerce_ajax_filters.i18n.select2.placeholder,
                 dropdownParent: $(this).closest('.filter-section'),
-                language: {noResults: () => nader_woocommerce_ajax_filters.i18n.select2.no_result},
+                language: {noResults: () => nader_woocommerce_ajax_filters.i18n.select2.no_results},
                 rtl: $('body').hasClass('rtl')
             });
         });
@@ -21,8 +21,9 @@ jQuery(function ($) {
             $(this).select2({
                 width: '100%',
                 rtl: $('body').hasClass('rtl'),
+                placeholder: $(this).data('placeholder') || nader_woocommerce_ajax_filters.i18n.select2.placeholder,
+                language: {noResults: () => nader_woocommerce_ajax_filters.i18n.select2.no_results},
                 dropdownParent: $(this).closest('.filter-section'),
-                placeholder: $(this).data('placeholder') || nader_woocommerce_ajax_filters.i18n.select2.choose,
                 minimumResultsForSearch: 10
             });
         });
@@ -141,6 +142,8 @@ jQuery(function ($) {
     function handleAjaxSuccess(response) {
         if (!response.success) return;
 
+        console.log(response.data)
+
         // حذف محتوای قبلی
         $('.product-content-section .woocommerce-pagination, .product-content-section ul.products, ' +
             '.product-content-section .woocommerce-no-products-found, .product-content-section .page-not-found').remove();
@@ -222,6 +225,9 @@ jQuery(function ($) {
 
         // اعمال فیلترهای داینامیک (مانند attributeها)
         applyDynamicFilters(urlFilters);
+
+        updateSelectedFiltersDisplay()
+
     }
 
     // تجزیه URL
@@ -359,72 +365,48 @@ jQuery(function ($) {
     function createFilterTag(filterKey, value, filterName, displayValue) {
         return $(`
         <div class="filter-tag" data-filter-key="${filterKey}" data-filter-value="${value}">
-            <span>${filterName}: ${displayValue}</span>
             <span class="remove-filter cursor-pointer">&times;</span>
+            <span>${filterName}: ${displayValue}</span>
         </div>
     `);
     }
 
     // تابع جدید برای گرفتن نام نمایشی فیلتر
+    // تابع ساده‌شده برای گرفتن نام نمایشی فیلتر
     function getFilterName(filterKey) {
-        const staticFilterNames = {
-            'price': nader_woocommerce_ajax_filters.i18n.price || 'Price',
-            'category': nader_woocommerce_ajax_filters.i18n.category || 'Category',
-            'brand': nader_woocommerce_ajax_filters.i18n.brand || 'Brand',
-            'orderby': nader_woocommerce_ajax_filters.i18n.orderby || 'Sort by',
-            'rating': nader_woocommerce_ajax_filters.i18n.rating || 'Rating',
-            'stock': nader_woocommerce_ajax_filters.i18n.stock || 'Stock'
-        };
+        const i18n = nader_woocommerce_ajax_filters.i18n;
 
-        // اگر فیلتر از نوع attribute باشد
+        // بررسی دسته‌بندی‌های مختلف
+        if (i18n.common[filterKey]) return i18n.common[filterKey];
+        if (i18n.sorting[filterKey]) return i18n.sorting[filterKey];
+        if (i18n.stock[filterKey]) return i18n.stock[filterKey];
+
+        // برای attributeها
         if (filterKey.startsWith('attribute-')) {
-            const attributeName = filterKey.replace('attribute-', '');
-            // سعی کنیم label را از صفحه پیدا کنیم
-            const $label = $(`label[for="${attributeName}-filter"]`);
-            if ($label.length) {
-                return $label.text().trim();
-            }
-
-            // اگر label پیدا نشد، از ترجمه‌های موجود استفاده کنیم
-            const translationKey = 'attribute_' + attributeName;
-            if (nader_woocommerce_ajax_filters.i18n[translationKey]) {
-                return nader_woocommerce_ajax_filters.i18n[translationKey];
-            }
-
-            // اگر ترجمه هم نبود، نام attribute را به صورت فرمت شده برگردانیم
-            return attributeName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            const attrName = filterKey.replace('attribute-', '');
+            return i18n.attributes[attrName] ||
+                attrName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
 
-        return staticFilterNames[filterKey] || filterKey;
+        return filterKey;
     }
 
     // تابع جدید برای گرفتن مقدار نمایشی فیلتر
     function getFilterValueDisplay(filterKey, value) {
-        if (filterKey === 'orderby') {
-            const orderNames = {
-                'menu_order': 'Default',
-                'popularity': 'Popularity',
-                'rating': 'Rating',
-                'date': 'Newest',
-                'price': 'Price: Low to High',
-                'price-desc': 'Price: High to Low'
-            };
-            return orderNames[value] || value;
-        }
-
+        const i18n = nader_woocommerce_ajax_filters.i18n;
+        // وضعیت موجودی
         if (filterKey === 'stock') {
-            const stockNames = {
-                'in-stock': 'In Stock',
-                'out-of-stock': 'Out of Stock',
-                'on-backorder': 'On Backorder'
-            };
-            return stockNames[value] || value;
+            return i18n.stock[value] || value;
+        }
+        // مرتب‌سازی
+        if (filterKey === 'orderby') {
+            return i18n.sorting[value] || value;
         }
 
         return value;
     }
 
-// تابع جدید برای حذف فیلتر
+    // تابع جدید برای حذف فیلتر
     function removeFilter(filterKey, value) {
         if (Array.isArray(state.filters[filterKey])) {
             const index = state.filters[filterKey].indexOf(value);
@@ -444,7 +426,7 @@ jQuery(function ($) {
         applyFilter();
     }
 
-// تابع جدید برای به روز رسانی UI پس از حذف فیلتر
+    // تابع جدید برای به روز رسانی UI پس از حذف فیلتر
     function updateUIAfterFilterRemoval(filterKey, value) {
         // برای selectها
         if (filterKey === 'orderby' || filterKey === 'rating' || filterKey === 'stock') {
@@ -474,7 +456,7 @@ jQuery(function ($) {
         }
     }
 
-// تابع جدید برای حذف همه فیلترها
+    // تابع جدید برای حذف همه فیلترها
     function clearAllFilters() {
         // حذف از state
         state.filters = {};
