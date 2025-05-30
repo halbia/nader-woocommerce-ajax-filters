@@ -413,7 +413,14 @@ jQuery(function ($) {
 
     // تابع جدید برای حذف فیلتر
     function removeFilter(filterKey, value) {
-        if (Array.isArray(state.filters[filterKey])) {
+        // حالت خاص برای فیلتر قیمت
+        if (filterKey === 'price') {
+            delete state.filters.price;
+            $('.min-price').val('');
+            $('.max-price').val('');
+            $('.slider-track').css('width', '0');
+            $('.slider-thumb').css(this.isRTL ? 'right' : 'left', '0');
+        } else if (Array.isArray(state.filters[filterKey])) {
             const index = state.filters[filterKey].indexOf(value);
             if (index !== -1) {
                 state.filters[filterKey].splice(index, 1);
