@@ -345,7 +345,12 @@ jQuery(function ($) {
             hasFilters = true;
             const filterName = getFilterName(filterKey);
 
-            if (Array.isArray(values)) {
+            // حالت خاص برای فیلتر قیمت
+            if (filterKey === 'price' && Array.isArray(values) && values.length === 2) {
+                const displayValue = `${values[0]} - ${values[1]}`;
+                $container.append(createFilterTag(filterKey, values, filterName, displayValue));
+            }
+            else if (Array.isArray(values)) {
                 values.forEach(value => {
                     const displayValue = getFilterValueDisplay(filterKey, value);
                     $container.append(createFilterTag(filterKey, value, filterName, displayValue));
