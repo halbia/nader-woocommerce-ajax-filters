@@ -22,6 +22,7 @@ jQuery(function ($) {
                 width: '100%',
                 rtl: $('body').hasClass('rtl'),
                 dropdownParent: $(this).closest('.filter-section'),
+                placeholder: $(this).data('placeholder') || nader_woocommerce_ajax_filters.i18n.select2.choose,
                 minimumResultsForSearch: 10
             });
         });
@@ -351,6 +352,7 @@ jQuery(function ($) {
 
         // نمایش/پنهان کردن دکمه حذف همه
         $clearAllBtn.toggle(hasFilters);
+        $('.nader-wc-ajax-filters-selected-filters').toggle(hasFilters);
     }
 
     // تابع جدید برای ایجاد تگ فیلتر
@@ -365,23 +367,35 @@ jQuery(function ($) {
 
     // تابع جدید برای گرفتن نام نمایشی فیلتر
     function getFilterName(filterKey) {
-        const filterNames = {
-            'price': 'Price',
-            'category': 'Category',
-            'brand': 'Brand',
-            'orderby': 'Sort by',
-            'rating': 'Rating',
-            'stock': 'Stock',
-            'attribute-cpu': 'CPU',
-            'attribute-color': 'Color'
+        const staticFilterNames = {
+            'price': nader_woocommerce_ajax_filters.i18n.price || 'Price',
+            'category': nader_woocommerce_ajax_filters.i18n.category || 'Category',
+            'brand': nader_woocommerce_ajax_filters.i18n.brand || 'Brand',
+            'orderby': nader_woocommerce_ajax_filters.i18n.orderby || 'Sort by',
+            'rating': nader_woocommerce_ajax_filters.i18n.rating || 'Rating',
+            'stock': nader_woocommerce_ajax_filters.i18n.stock || 'Stock'
         };
 
-        // برای attributeهای داینامیک
-        if (filterKey.startsWith('attribute-') && !filterNames[filterKey]) {
-            return filterKey.replace('attribute-', '').toUpperCase();
+        // اگر فیلتر از نوع attribute باشد
+        if (filterKey.startsWith('attribute-')) {
+            const attributeName = filterKey.replace('attribute-', '');
+            // سعی کنیم label را از صفحه پیدا کنیم
+            const $label = $(`label[for="${attributeName}-filter"]`);
+            if ($label.length) {
+                return $label.text().trim();
+            }
+
+            // اگر label پیدا نشد، از ترجمه‌های موجود استفاده کنیم
+            const translationKey = 'attribute_' + attributeName;
+            if (nader_woocommerce_ajax_filters.i18n[translationKey]) {
+                return nader_woocommerce_ajax_filters.i18n[translationKey];
+            }
+
+            // اگر ترجمه هم نبود، نام attribute را به صورت فرمت شده برگردانیم
+            return attributeName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
 
-        return filterNames[filterKey] || filterKey;
+        return staticFilterNames[filterKey] || filterKey;
     }
 
     // تابع جدید برای گرفتن مقدار نمایشی فیلتر

@@ -271,6 +271,15 @@ class Nader_Woocommerce_Ajax_Filters{
                         'no_result' => __('No results found.', 'nader'),
                         'choose'    => __('Select an option', 'nader'),
                     ],
+                    'price' => __('Price', 'nader'),
+                    'category' => __('Category', 'nader'),
+                    'brand' => __('Brand', 'nader'),
+                    'orderby' => __('Sort by', 'nader'),
+                    'rating' => __('Rating', 'nader'),
+                    'stock' => __('Stock', 'nader'),
+                    'attribute_cpu' => __('CPU', 'nader'),
+                    'attribute_color' => __('Color', 'nader'),
+                    // سایر ترجمه‌های attributeها
                 ],
                 'price_range' => $this->get_product_price_range()
             ]);
