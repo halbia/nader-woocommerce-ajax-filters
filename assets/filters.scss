@@ -1,0 +1,226 @@
+/* رفع مشکل نمایش dropdown select2 */
+.select2-container--open {
+  .select2-dropdown {
+	position:   absolute !important;
+	top:        100% !important;
+	left:       0 !important;
+	width:      100% !important;
+	margin-top: 5px !important;
+  }
+
+  .select2-dropdown--above {
+	top:           auto !important;
+	bottom:        100% !important;
+	margin-top:    0 !important;
+	margin-bottom: 5px !important;
+  }
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__rendered li {
+  font-size: 12px;
+}
+
+.nader-woocommerce-ajax-filters {
+  .select2-container--default .select2-selection--single {
+	font-size: 12px;
+
+	.select2-selection__rendered {
+	  padding-top: 13px;
+	}
+  }
+}
+
+.filter-section {
+  position:       relative;
+  display:        flex;
+  flex-direction: column;
+  margin-bottom:  20px;
+
+  .checkbox-item input {
+	position:    absolute;
+	opacity:     0;
+	cursor:      pointer;
+	height:      0;
+	width:       0;
+	user-select: none;
+  }
+
+  .checkmark {
+	display:          inline-block;
+	position:         relative;
+	height:           16px;
+	width:            16px;
+	background-color: #fff;
+	border:           2px solid #ddd;
+	border-radius:    3px;
+  }
+
+  .checkbox-item:hover input ~ .checkmark {
+	border-color: #96588a;
+  }
+
+  .checkbox-item input:checked ~ .checkmark {
+	background-color: #96588a;
+	border-color:     #96588a;
+  }
+
+  .checkmark:after {
+	content:      "";
+	position:     absolute;
+	display:      none;
+	left:         4px;
+	top:          1px;
+	width:        4px;
+	height:       8px;
+	border:       solid white;
+	border-width: 0 2px 2px 0;
+	transform:    rotate(45deg);
+  }
+
+  .checkbox-item input:checked ~ .checkmark:after {
+	display: block;
+  }
+
+  .checkbox-name {
+	user-select: none;
+  }
+
+  input[type=checkbox]:checked ~ .checkbox-name {
+	font-weight: bold;
+  }
+}
+
+.filter-ui-type-checkbox {
+  display:        flex;
+  flex-direction: column;
+  gap:            4px;
+
+  .child-terms {
+	display:        flex;
+	flex-direction: column;
+	gap:            4px;
+	margin-left:    16px;
+  }
+
+  .checkbox-item {
+	display:     flex;
+	align-items: center;
+	gap:         4px;
+	position:    relative;
+	cursor:      pointer;
+	user-select: none;
+	font-size:   13px;
+  }
+}
+
+.rtl .filter-ui-type-checkbox .child-terms {
+  margin-right: 16px;
+  margin-left:  0;
+}
+
+.filter-ui-type-color {
+  display:        flex;
+  flex-direction: row;
+  flex-wrap:      wrap;
+  gap:            4px;
+
+  .color-palette {
+	display:       inline-flex;
+	align-items:   center;
+	gap:           6px;
+	font-size:     12px;
+	padding:       4px;
+	padding-left:  10px;
+	border-radius: 50px;
+	background:    #f0f0f0;
+	cursor:        pointer;
+
+	.color {
+	  display:       inline-block;
+	  width:         20px;
+	  height:        20px;
+	  background:    #cacaca;
+	  border-radius: 50px;
+	  margin:        0;
+	  border:        none;
+
+	  &:after {
+		left: 8px;
+		top:  5px;
+	  }
+	}
+  }
+}
+
+.price-slider {
+  position:      relative;
+  height:        6px;
+  background:    #e1e1e1;
+  border-radius: 3px;
+  margin:        10px 0 20px;
+}
+
+.slider-track {
+  position:      absolute;
+  height:        100%;
+  background:    #96588a;
+  border-radius: 3px;
+}
+
+.price-inputs {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  gap:             10px;
+
+  input {
+	width:         80px;
+	padding:       4px 8px;
+	border:        1px solid #ddd;
+	border-radius: 4px;
+	text-align:    center;
+	font-size:     12px;
+  }
+
+  span {
+	color: #666;
+  }
+}
+
+.slider-thumb {
+  position:      absolute;
+  width:         20px;
+  height:        20px;
+  background:    #fff;
+  border:        2px solid #96588a;
+  border-radius: 50%;
+  top:           -8px;
+  cursor:        grab;
+  transform:     translateX(50%);
+}
+
+body:not(.rtl) .slider-thumb {
+  transform: translateX(-50%);
+  left:      0;
+  right:     auto;
+}
+
+body.rtl .slider-track {
+  right: 0;
+  left:  auto;
+}
+
+.nader-woocommerce-ajax-filters-loading {
+  pointer-events: none;
+  opacity:        0.7;
+}
+
+p.page-not-found {
+  position:      relative;
+  width:         100%;
+  padding:       8px 16px;
+  font-size:     13px;
+  background:    white;
+  color:         #222;
+  border-radius: 8px;
+}
