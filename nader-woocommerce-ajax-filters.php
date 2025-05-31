@@ -83,14 +83,30 @@ class Nader_Woocommerce_Ajax_Filters{
 
         add_shortcode('nader_woocommerce_ajax_filters', [$this, 'shortcode_handler']);
     }
+
     public function init_rewrites()
     {
-
+        // Rewrite rule برای صفحه فروشگاه
         add_rewrite_rule(
             "^({$this->shop_slug})/([^/]+(/[^/]+)*)/?$",
             'index.php?post_type=product&wc_ajax_filters=$matches[2]',
             'top'
         );
+
+        // Rewrite rule جدید برای دسته‌بندی‌ها
+        add_rewrite_rule(
+            "^product-category/([^/]+)/([^/]+(/[^/]+)*)/?$",
+            'index.php?product_cat=$matches[1]&wc_ajax_filters=$matches[2]',
+            'top'
+        );
+
+        // Rewrite rule جدید برای فیلترهای تکی
+        add_rewrite_rule(
+            "^({$this->shop_slug})/([^/]+)/([^/]+)/?$",
+            'index.php?post_type=product&wc_ajax_filters=$matches[2]/$matches[3]',
+            'top'
+        );
+
         add_rewrite_tag('%wc_ajax_filters%', '([^&]+)');
     }
 
@@ -115,11 +131,6 @@ class Nader_Woocommerce_Ajax_Filters{
         $url = $this->map_stock_values($url);
         $segments = explode('/', trim($url, '/'));
 
-        $filters = [
-            'meta_query' => ['relation' => 'AND'],
-            'tax_query'  => ['relation' => 'AND']
-        ];
-
         $field_types = [
             'price'    => ['type' => 'numeric_array', 'meta_key' => '_price', 'compare' => 'BETWEEN'],
             'rating'   => ['type' => 'numeric', 'meta_key' => '_wc_average_rating', 'compare' => '>='],
@@ -137,74 +148,102 @@ class Nader_Woocommerce_Ajax_Filters{
             $key = sanitize_key($segments[$i]); // اعتبارسنجی کلید
             $value = $segments[$i + 1];
 
-            if (!isset($field_types[$key]))
-                continue;
-
-            $config = $field_types[$key];
-
-            switch ($config['type']) {
-                case 'numeric':
-                    $filters[$key] = absint($value);
-                    if (isset($config['meta_key'])) {
-                        $filters['meta_query'][] = [
-                            'key'     => $config['meta_key'],
-                            'value'   => absint($value),
-                            'compare' => $config['compare'] ?? '=',
-                            'type'    => 'NUMERIC'
-                        ];
-                    }
-                    break;
-
-                case 'numeric_array':
-                    $values = array_map('floatval', explode('--', $value));
-                    $filters[$key] = $values;
-
-                    if (isset($config['meta_key'])) {
-                        if ($config['compare'] === 'BETWEEN' && count($values) === 2) {
+            if (isset($field_types[$key])) {
+                $config = $field_types[$key];
+                switch ($config['type']) {
+                    case 'numeric':
+                        $filters[$key] = absint($value);
+                        if (isset($config['meta_key'])) {
                             $filters['meta_query'][] = [
                                 'key'     => $config['meta_key'],
-                                'value'   => $values,
-                                'compare' => 'BETWEEN',
+                                'value'   => absint($value),
+                                'compare' => $config['compare'] ?? '=',
                                 'type'    => 'NUMERIC'
                             ];
-                        } else {
-                            foreach ($values as $val) {
+                        }
+                        break;
+
+                    case 'numeric_array':
+                        $values = array_map('floatval', explode('--', $value));
+                        $filters[$key] = $values;
+
+                        if (isset($config['meta_key'])) {
+                            if ($config['compare'] === 'BETWEEN' && count($values) === 2) {
                                 $filters['meta_query'][] = [
                                     'key'     => $config['meta_key'],
-                                    'value'   => $val,
-                                    'compare' => $config['compare'] ?? '=',
+                                    'value'   => $values,
+                                    'compare' => 'BETWEEN',
                                     'type'    => 'NUMERIC'
+                                ];
+                            } else {
+                                foreach ($values as $val) {
+                                    $filters['meta_query'][] = [
+                                        'key'     => $config['meta_key'],
+                                        'value'   => $val,
+                                        'compare' => $config['compare'] ?? '=',
+                                        'type'    => 'NUMERIC'
+                                    ];
+                                }
+                            }
+                        }
+                        break;
+
+                    case 'string':
+                        $filters[$key] = sanitize_text_field(urldecode($value));
+                        break;
+
+                    case 'term_array':
+                        $values = array_map('sanitize_title', explode('--', $value));
+                        $filters[$key] = $values;
+
+                        if (isset($config['taxonomy'])) {
+                            $filters['tax_query'][] = [
+                                'taxonomy' => $config['taxonomy'],
+                                'field'    => 'slug',
+                                'terms'    => $values,
+                                'operator' => 'IN'
+                            ];
+                        } elseif (isset($config['meta_key'])) {
+                            foreach ($values as $val) {
+                                $filters['meta_query'][] = [
+                                    'key'   => $config['meta_key'],
+                                    'value' => $val
                                 ];
                             }
                         }
-                    }
-                    break;
+                        break;
+                }
+            } elseif (taxonomy_exists('pa_' . $key)) {
+                $taxonomy = 'pa_' . $key;
+                $values = array_map('sanitize_title', explode('--', $value));
 
-                case 'string':
-                    $filters[$key] = sanitize_text_field(urldecode($value));
-                    break;
+                $filters['tax_query'][] = [
+                    'taxonomy' => $taxonomy,
+                    'field'    => 'slug',
+                    'terms'    => $values,
+                    'operator' => 'IN'
+                ];
+            } // 3. در نهایت بررسی کنید آیا کلید یک صفت سفارشی است
+            elseif (mb_strpos($key, 'attribute-') === 0) {
+                $taxonomy = str_replace('attribute-', '', $key);
+                $values = array_map('sanitize_title', explode('--', $value));
 
-                case 'term_array':
-                    $values = array_map('sanitize_title', explode('--', $value));
-                    $filters[$key] = $values;
-
-                    if (isset($config['taxonomy'])) {
-                        $filters['tax_query'][] = [
-                            'taxonomy' => $config['taxonomy'],
-                            'field'    => 'slug',
-                            'terms'    => $values,
-                            'operator' => 'IN'
-                        ];
-                    } elseif (isset($config['meta_key'])) {
-                        foreach ($values as $val) {
-                            $filters['meta_query'][] = [
-                                'key'   => $config['meta_key'],
-                                'value' => $val
-                            ];
-                        }
-                    }
-                    break;
+                $filters['tax_query'][] = [
+                    'taxonomy' => $taxonomy,
+                    'field'    => 'slug',
+                    'terms'    => $values,
+                    'operator' => 'IN'
+                ];
             }
+
+        }
+
+
+        if (!empty($filters['tax_query'])) {
+            $filters['tax_query']['relation'] = 'AND';
+        }
+        if (!empty($filters['meta_query'])) {
+            $filters['meta_query']['relation'] = 'AND';
         }
 
         return $filters;
@@ -213,7 +252,7 @@ class Nader_Woocommerce_Ajax_Filters{
     public function parse_request($wp)
     {
         if (!empty($wp->query_vars['wc_ajax_filters'])) {
-            // اعتبارسنجی URL با الگوی مجاز
+            // اعتبارسنجی انعطاف‌پذیرتر برای پشتیبانی از ویژگی‌ها
             if (!preg_match('/^[a-z0-9\-_\/]+$/i', $wp->query_vars['wc_ajax_filters'])) {
                 return;
             }
@@ -226,7 +265,12 @@ class Nader_Woocommerce_Ajax_Filters{
     public function pre_get_posts($query)
     {
 
-        if (is_admin() || !$query->is_main_query() || !is_shop() || !isset($query->query_vars['wc_ajax_filters_parsed'])) {
+        // گسترش شرط برای پشتیبانی از تمام صفحات محصولات
+        if (is_admin() ||
+            !$query->is_main_query() ||
+            (!is_shop() && !is_product_taxonomy() && !is_product_category()) ||
+            !isset($query->query_vars['wc_ajax_filters_parsed']))
+        {
             return;
         }
 
@@ -581,5 +625,16 @@ class Nader_Woocommerce_Ajax_Filters{
 
 
 }
+
+// در انتهای کلاس قبل از خط new Nader_Woocommerce_Ajax_Filters();
+register_activation_hook(__FILE__, function() {
+    $instance = new Nader_Woocommerce_Ajax_Filters();
+    $instance->init_rewrites();
+    flush_rewrite_rules();
+});
+
+register_deactivation_hook(__FILE__, function() {
+    flush_rewrite_rules();
+});
 
 new Nader_Woocommerce_Ajax_Filters();
