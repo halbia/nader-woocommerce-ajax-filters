@@ -50,18 +50,18 @@
 	position:         relative;
 	height:           16px;
 	width:            16px;
-	background-color: #fff;
-	border:           2px solid #ddd;
+	background-color: var(--nader-color-white);
+	border:           2px solid var(--nader-color-gray);
 	border-radius:    3px;
   }
 
   .checkbox-item:hover input ~ .checkmark {
-	border-color: #96588a;
+	border-color: var(--nader-color-main);
   }
 
   .checkbox-item input:checked ~ .checkmark {
-	background-color: #96588a;
-	border-color:     #96588a;
+	background-color: var(--nader-color-main);
+	border-color:     var(--nader-color-main);
   }
 
   .checkmark:after {
@@ -72,7 +72,7 @@
 	top:          1px;
 	width:        4px;
 	height:       8px;
-	border:       solid white;
+	border:       solid var(--nader-color-white);
 	border-width: 0 2px 2px 0;
 	transform:    rotate(45deg);
   }
@@ -132,14 +132,14 @@
 	padding:       4px;
 	padding-left:  10px;
 	border-radius: 50px;
-	background:    #f0f0f0;
+	background:    var(--nader-color-white-gray);
 	cursor:        pointer;
 
 	.color {
 	  display:       inline-block;
 	  width:         20px;
 	  height:        20px;
-	  background:    #cacaca;
+	  background:    var(--nader-color-gray);
 	  border-radius: 50px;
 	  margin:        0;
 	  border:        none;
@@ -163,7 +163,7 @@
 .slider-track {
   position:      absolute;
   height:        100%;
-  background:    #96588a;
+  background:    var(--nader-color-main);
   border-radius: 3px;
 }
 
@@ -183,7 +183,7 @@
   }
 
   span {
-	color: #666;
+	color: var(--nader-color-dark-light);
   }
 }
 
@@ -191,8 +191,8 @@
   position:      absolute;
   width:         20px;
   height:        20px;
-  background:    #fff;
-  border:        2px solid #96588a;
+  background:    var(--nader-color-white);
+  border:        2px solid var(--nader-color-main);
   border-radius: 50%;
   top:           -8px;
   cursor:        grab;
@@ -220,8 +220,8 @@ p.page-not-found {
   width:         100%;
   padding:       8px 16px;
   font-size:     13px;
-  background:    white;
-  color:         #222;
+  background:    var(--nader-color-white);
+  color:         var(--nader-color-dark);
   border-radius: 8px;
 }
 
@@ -237,14 +237,14 @@ p.page-not-found {
 	display: flex;
 	align-items: center;
 	gap: 4px;
-	background: #f0f0f0;
+	background: var(--nader-color-white-gray);
 	padding: 4px 8px;
 	border-radius: 4px;
 	font-size: 12px;
 
 	.remove-filter {
 	  cursor: pointer;
-	  color: #999;
+	  color: var(--nader-color-dark-light);
 	  font-weight: bold;
 	  display:         flex;
 	  font-size:       16px;
@@ -254,7 +254,7 @@ p.page-not-found {
 	  height:          12px;
 
 	  &:hover {
-		color: #d33;
+		color: var(--nader-color-red);
 	  }
 	}
   }
@@ -263,14 +263,14 @@ p.page-not-found {
 	margin-top: 10px;
 	background: none;
 	border: none;
-	color: #96588a;
+	color: var(--nader-color-main);
 	text-decoration: underline;
 	cursor: pointer;
 	font-size: 12px;
 	padding: 0;
 
 	&:hover {
-	  color: #d33;
+	  color: var(--nader-color-red);
 	}
   }
 }

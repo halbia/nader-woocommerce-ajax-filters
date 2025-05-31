@@ -348,6 +348,7 @@ jQuery(function ($) {
     }
 
     // تابع جدید برای نمایش فیلترهای انتخاب شده
+    // تابع جدید برای نمایش فیلترهای انتخاب شده
     function updateSelectedFiltersDisplay() {
         const $container = $('.selected-filters-container');
         const $clearAllBtn = $('.clear-all-filters');
@@ -370,12 +371,10 @@ jQuery(function ($) {
             }
             else if (Array.isArray(values)) {
                 values.forEach(value => {
-                    const displayValue = getFilterValueDisplay(filterKey, value);
-                    $container.append(createFilterTag(filterKey, value, filterName, displayValue));
+                    $container.append(createFilterTag(filterKey, value, filterName, value));
                 });
             } else {
-                const displayValue = getFilterValueDisplay(filterKey, values);
-                $container.append(createFilterTag(filterKey, values, filterName, displayValue));
+                $container.append(createFilterTag(filterKey, values, filterName, values));
             }
         });
 
@@ -384,12 +383,35 @@ jQuery(function ($) {
         $('.nader-wc-ajax-filters-selected-filters').toggle(hasFilters);
     }
 
+
     // تابع جدید برای ایجاد تگ فیلتر
     function createFilterTag(filterKey, value, filterName, displayValue) {
+        // دریافت متن واقعی فیلتر از عنصر .checkbox-name
+        let actualDisplayValue = displayValue;
+
+        // برای فیلترهای checkbox، متن واقعی را از صفحه دریافت می‌کنیم
+        if (filterKey !== 'price' && filterKey !== 'orderby' && filterKey !== 'rating') {
+            const $element = $(`input[data-filter-slug="${filterKey}"][value="${value}"]`)
+                .closest('.checkbox-item')
+                .find('.checkbox-name');
+
+            if ($element.length) {
+                actualDisplayValue = $element.text().trim();
+            }
+        }
+
+        // برای فیلترهای select
+        if (filterKey === 'category' || filterKey === 'stock' || filterKey === 'rating') {
+            const $option = $(`select[data-filter-slug="${filterKey}"] option[value="${value}"]`);
+            if ($option.length) {
+                actualDisplayValue = $option.text().trim();
+            }
+        }
+
         return $(`
         <div class="filter-tag" data-filter-key="${filterKey}" data-filter-value="${value}">
             <span class="remove-filter cursor-pointer">&times;</span>
-            <span>${filterName}: ${displayValue}</span>
+            <span>${filterName}: ${actualDisplayValue}</span>
         </div>
     `);
     }
