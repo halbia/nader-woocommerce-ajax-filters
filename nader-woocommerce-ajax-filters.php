@@ -323,11 +323,14 @@ class Nader_Woocommerce_Ajax_Filters{
     {
         global $wpdb;
 
-        $prices = $wpdb->get_row("
+        // استفاده از prepare برای ایمن‌سازی کوئری
+        $query = $wpdb->prepare("
         SELECT MIN(meta_value + 0) as min, MAX(meta_value + 0) as max
         FROM {$wpdb->postmeta}
-        WHERE meta_key = '_price' AND meta_value != ''
-    ");
+        WHERE meta_key = %s AND meta_value != ''
+    ", '_price');
+
+        $prices = $wpdb->get_row($query);
 
         return [
             'min' => floor($prices->min),
@@ -453,15 +456,27 @@ class Nader_Woocommerce_Ajax_Filters{
     {
         check_ajax_referer('nader_woocommerce_ajax_filters_nonce', 'nonce');
 
-        $filters = $_POST['filters'] ?? [];
+        // اعتبارسنجی ساختار فیلترها
+        $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : [];
+
         // اعتبارسنجی ساختار فیلترها
         if (!is_array($filters)) {
             wp_send_json_error('Invalid filters format', 400);
         }
-        // ضدعفونی هر مقدار در فیلترها
-        array_walk_recursive($filters, function(&$value) {
-            $value = sanitize_text_field($value);
-        });
+
+        // تابع ضدعفونی بازگشتی
+        $sanitize_value = function(&$value, $key) {
+            if (is_array($value)) {
+                array_walk_recursive($value, function(&$v) {
+                    $v = sanitize_text_field($v);
+                });
+            } else {
+                $value = sanitize_text_field($value);
+            }
+        };
+
+        array_walk($filters, $sanitize_value);
+
 
         $args = $this->build_query_args($filters);
 
