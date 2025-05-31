@@ -225,7 +225,6 @@ class Nader_Woocommerce_Ajax_Filters{
 
     public function pre_get_posts($query)
     {
-        var_dump($query->query_vars['wc_ajax_filters_parsed']);
 
         if (is_admin() || !$query->is_main_query() || !is_shop() || !isset($query->query_vars['wc_ajax_filters_parsed'])) {
             return;
@@ -471,6 +470,13 @@ class Nader_Woocommerce_Ajax_Filters{
 
     public function ajax_handler()
     {
+
+        // بررسی منبع درخواست
+        $referer = wp_get_referer();
+        if (!$referer || !in_array(parse_url($referer, PHP_URL_HOST), [$_SERVER['HTTP_HOST']])) {
+            wp_send_json_error('Invalid request source', 403);
+        }
+
         $user_id = get_current_user_id();
         $nonce = $_POST['nonce'] ?? '';
 
