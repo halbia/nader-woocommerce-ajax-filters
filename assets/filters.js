@@ -271,23 +271,37 @@ jQuery(function ($) {
                 }
             },
             category: function (value) {
-                $('#category-filter').val(value).trigger('change.select2');
-                state.filters.category = value;
+                // تبدیل مقدار به آرایه اگر رشته باشد
+                const values = Array.isArray(value) ? value : [value];
+                $('#category-filter').val(values).trigger('change.select2');
+                state.filters.category = values;
             },
             brand: function (value) {
-                $.each(value, function (_, brand) {
+                // تبدیل مقدار به آرایه اگر رشته باشد
+                const values = Array.isArray(value) ? value : [value];
+
+                // بازنشانی تمام چک‌باکس‌ها
+                $('input[data-filter-slug="brand"]').prop('checked', false);
+
+                // انتخاب مقادیر جدید
+                values.forEach(brand => {
                     $('input[data-filter-slug="brand"][value="' + brand + '"]').prop('checked', true);
                 });
-                state.selectedCheckboxes.brand = value;
-                state.filters.brand = value;
+
+                state.selectedCheckboxes.brand = values;
+                state.filters.brand = values;
             },
             rating: function (value) {
-                $('#rating-filter').val(value).trigger('change.select2');
-                state.filters.rating = value;
+                // تبدیل مقدار به عدد اگر رشته باشد
+                const ratingValue = typeof value === 'string' ? parseInt(value) : value;
+                $('#rating-filter').val(ratingValue).trigger('change.select2');
+                state.filters.rating = ratingValue;
             },
             stock: function (value) {
-                $('#stock-filter').val(value).trigger('change.select2');
-                state.filters.stock = value;
+                // تبدیل مقدار به آرایه اگر رشته باشد
+                const values = Array.isArray(value) ? value : [value];
+                $('#stock-filter').val(values).trigger('change.select2');
+                state.filters.stock = values;
             },
             orderby: function (value) {
                 $('select[data-filter-slug="orderby"]').val(value).trigger('change.select2');
@@ -306,7 +320,10 @@ jQuery(function ($) {
     // اعمال فیلترهای داینامیک
     function applyDynamicFilters(filters) {
         Object.keys(filters).forEach(filter => {
-            const values = filters[filter];
+            const values = Array.isArray(filters[filter]) ?
+                filters[filter] :
+                [filters[filter]];
+
             const filterSlug = 'attribute-' + filter;
 
             // حذف انتخاب‌های قبلی
@@ -318,15 +335,10 @@ jQuery(function ($) {
             }
 
             // اعمال مقادیر جدید
-            if (typeof values === 'string') {
-                $('input[data-filter-slug="' + filterSlug + '"][value="' + values + '"]').prop('checked', true);
-                state.selectedCheckboxes[filterSlug].push(values);
-            } else if (Array.isArray(values)) {
-                values.forEach(value => {
-                    $('input[data-filter-slug="' + filterSlug + '"][value="' + value + '"]').prop('checked', true);
-                    state.selectedCheckboxes[filterSlug].push(value);
-                });
-            }
+            values.forEach(value => {
+                $('input[data-filter-slug="' + filterSlug + '"][value="' + value + '"]').prop('checked', true);
+                state.selectedCheckboxes[filterSlug].push(value);
+            });
 
             // به‌روزرسانی state.filters
             if (state.selectedCheckboxes[filterSlug].length > 0) {
