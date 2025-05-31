@@ -83,9 +83,9 @@ class Nader_Woocommerce_Ajax_Filters{
 
         add_shortcode('nader_woocommerce_ajax_filters', [$this, 'shortcode_handler']);
     }
-
     public function init_rewrites()
     {
+
         add_rewrite_rule(
             "^({$this->shop_slug})/([^/]+(/[^/]+)*)/?$",
             'index.php?post_type=product&wc_ajax_filters=$matches[2]',
@@ -134,7 +134,7 @@ class Nader_Woocommerce_Ajax_Filters{
             if (!isset($segments[$i + 1]))
                 continue;
 
-            $key = $segments[$i];
+            $key = sanitize_key($segments[$i]); // اعتبارسنجی کلید
             $value = $segments[$i + 1];
 
             if (!isset($field_types[$key]))
@@ -213,6 +213,11 @@ class Nader_Woocommerce_Ajax_Filters{
     public function parse_request($wp)
     {
         if (!empty($wp->query_vars['wc_ajax_filters'])) {
+            // اعتبارسنجی URL با الگوی مجاز
+            if (!preg_match('/^[a-z0-9\-_\/]+$/i', $wp->query_vars['wc_ajax_filters'])) {
+                return;
+            }
+
             $filter_string = sanitize_text_field($wp->query_vars['wc_ajax_filters']);
             $wp->query_vars['wc_ajax_filters_parsed'] = $this->parse_filters($filter_string);
         }
@@ -220,6 +225,7 @@ class Nader_Woocommerce_Ajax_Filters{
 
     public function pre_get_posts($query)
     {
+        var_dump($query->query_vars['wc_ajax_filters_parsed']);
 
         if (is_admin() || !$query->is_main_query() || !is_shop() || !isset($query->query_vars['wc_ajax_filters_parsed'])) {
             return;
@@ -260,10 +266,12 @@ class Nader_Woocommerce_Ajax_Filters{
                 'nader-woocommerce-ajax-filters-price-slider'
             ], '4.0', true);
 
+            // ایجاد nonce با طول عمر کوتاه‌تر
+            $nonce = wp_create_nonce('nader_ajax_filters_' . get_current_user_id());
             wp_localize_script('nader-woocommerce-ajax-filters', 'nader_woocommerce_ajax_filters', [
                 'ajaxurl'     => admin_url('admin-ajax.php'),
                 'shop_url'    => rtrim(get_permalink(wc_get_page_id('shop')), '/'),
-                'nonce'       => wp_create_nonce('nader_woocommerce_ajax_filters_nonce'),
+                'nonce'       => $nonce,
                 'i18n'        => [
                     // عمومی
                     'common' => [
@@ -348,6 +356,15 @@ class Nader_Woocommerce_Ajax_Filters{
         // اعتبارسنجی نوع مقدار
         if (!in_array($config['value_type'], $this->allowed_types)) {
             $config['value_type'] = 'CHAR'; // مقدار پیش‌فرض
+        }
+
+        // اعتبارسنجی مقادیر عددی
+        if ($config['value_type'] === 'NUMERIC' || $config['value_type'] === 'DECIMAL') {
+            if (is_array($value)) {
+                $value = array_map('floatval', $value);
+            } else {
+                $value = floatval($value);
+            }
         }
 
         return [
@@ -454,7 +471,12 @@ class Nader_Woocommerce_Ajax_Filters{
 
     public function ajax_handler()
     {
-        check_ajax_referer('nader_woocommerce_ajax_filters_nonce', 'nonce');
+        $user_id = get_current_user_id();
+        $nonce = $_POST['nonce'] ?? '';
+
+        if (!wp_verify_nonce($nonce, 'nader_ajax_filters_' . $user_id)) {
+            wp_send_json_error('Invalid nonce', 403);
+        }
 
         // اعتبارسنجی ساختار فیلترها
         $filters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : [];

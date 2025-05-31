@@ -60,7 +60,7 @@ defined('ABSPATH') || exit;
 
 
 <div class="nader-woocommerce-ajax-filters filter-section">
-    <label for="cpu-filter"><?php esc_html_e('Cpu', 'nader'); ?></label>
+    <label for="cpu-filter">CPU</label>
 
     <div id="cpu-filter"
          class="filter-type-taxonomy filter-ui-type-checkbox">
