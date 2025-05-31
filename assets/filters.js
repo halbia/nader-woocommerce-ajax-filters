@@ -142,6 +142,8 @@ jQuery(function ($) {
     function handleAjaxSuccess(response) {
         if (!response.success) return;
 
+        // console.log(response)
+
         // حذف محتوای قبلی
         $('.product-content-section .woocommerce-pagination, .product-content-section ul.products, ' +
             '.product-content-section .woocommerce-no-products-found, .product-content-section .page-not-found').remove();

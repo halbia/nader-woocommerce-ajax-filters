@@ -132,7 +132,12 @@ class Nader_Woocommerce_Ajax_Filters{
         $segments = explode('/', trim($url, '/'));
 
         $field_types = [
-            'price'    => ['type' => 'numeric_array', 'meta_key' => '_price', 'compare' => 'BETWEEN'],
+            'price' => [
+                'type'       => 'numeric_array',
+                'meta_key'   => '_price',
+                'compare'    => 'BETWEEN',
+                'value_type' => 'NUMERIC' // اضافه کردن این خط
+            ],
             'rating'   => ['type' => 'numeric', 'meta_key' => '_wc_average_rating', 'compare' => '>='],
             'page'     => ['type' => 'numeric'],
             'orderby'  => ['type' => 'string'],
@@ -164,6 +169,7 @@ class Nader_Woocommerce_Ajax_Filters{
                         break;
 
                     case 'numeric_array':
+                        // برای فیلتر قیمت، اطمینان حاصل کنید مقادیر به float تبدیل شوند
                         $values = array_map('floatval', explode('--', $value));
                         $filters[$key] = $values;
 
@@ -175,15 +181,6 @@ class Nader_Woocommerce_Ajax_Filters{
                                     'compare' => 'BETWEEN',
                                     'type'    => 'NUMERIC'
                                 ];
-                            } else {
-                                foreach ($values as $val) {
-                                    $filters['meta_query'][] = [
-                                        'key'     => $config['meta_key'],
-                                        'value'   => $val,
-                                        'compare' => $config['compare'] ?? '=',
-                                        'type'    => 'NUMERIC'
-                                    ];
-                                }
                             }
                         }
                         break;
@@ -277,15 +274,22 @@ class Nader_Woocommerce_Ajax_Filters{
         $filters = $query->query_vars['wc_ajax_filters_parsed'];
 
         // اعمال meta_query
-        if (!empty($filters['meta_query']) && count($filters['meta_query']) > 1) {
-            $meta_query = $query->get('meta_query', []);
-            $query->set('meta_query', array_merge($meta_query, $filters['meta_query']));
+        if (!empty($filters['meta_query'])) {
+            $existing_meta_query = $query->get('meta_query', []);
+            $new_meta_query = array_merge($existing_meta_query, $filters['meta_query']);
+
+            if (count($new_meta_query) > 1) {
+                $new_meta_query['relation'] = 'AND';
+            }
+
+            $query->set('meta_query', $new_meta_query);
         }
 
         // اعمال tax_query
-        if (!empty($filters['tax_query']) && count($filters['tax_query']) > 1) {
-            $tax_query = $query->get('tax_query', []);
-            $query->set('tax_query', array_merge($tax_query, $filters['tax_query']));
+        if (!empty($filters['tax_query']) && count($filters['tax_query']) > 0) {
+            $existing_tax_query = $query->get('tax_query', []);
+            $new_tax_query = array_merge($existing_tax_query, $filters['tax_query']);
+            $query->set('tax_query', $new_tax_query);
         }
 
         // اعمال orderby
@@ -401,8 +405,10 @@ class Nader_Woocommerce_Ajax_Filters{
             $config['value_type'] = 'CHAR'; // مقدار پیش‌فرض
         }
 
-        // اعتبارسنجی مقادیر عددی
-        if ($config['value_type'] === 'NUMERIC' || $config['value_type'] === 'DECIMAL') {
+        // برای فیلتر قیمت، نوع را همیشه NUMERIC قرار دهید و مقادیر را به float تبدیل کنید
+        if ($config['key'] === '_price') {
+            $config['value_type'] = 'NUMERIC';
+
             if (is_array($value)) {
                 $value = array_map('floatval', $value);
             } else {
@@ -410,9 +416,23 @@ class Nader_Woocommerce_Ajax_Filters{
             }
         }
 
+        // برای فیلتر رتبه‌بندی، مقادیر را به float تبدیل کنید
+        if ($config['key'] === '_wc_average_rating') {
+            if (is_array($value)) {
+                $value = array_map('floatval', $value);
+            } else {
+                $value = floatval($value);
+            }
+        }
+
+        // برای فیلتر وضعیت موجودی، مقادیر را به حالت استاندارد ووکامرس تبدیل کنید
+        if ($config['key'] === '_stock_status') {
+            $value = $this->map_stock_values($value);
+        }
+
         return [
             'key'     => sanitize_key($config['key']),
-            'value'   => is_array($value) ? array_map('sanitize_text_field', $this->map_stock_values($value)) : sanitize_text_field($value),
+            'value'   => $value,
             'compare' => $config['compare'],
             'type'    => $config['value_type']
         ];
@@ -490,8 +510,17 @@ class Nader_Woocommerce_Ajax_Filters{
         foreach ($filters as $type => $value) {
             $filter_config = $this->filter_types[$type];
 
+            // برای فیلتر قیمت، مطمئن شوید که مقادیر عددی هستند
+            if ($type === 'price' && is_array($value)) {
+                $value = array_map('floatval', $value);
+            }
+
             switch ($filter_config['type']) {
                 case 'meta':
+                    // برای فیلتر قیمت، اطمینان حاصل کنید مقادیر به float تبدیل شوند
+                    if ($type === 'price' && is_array($value)) {
+                        $value = array_map('floatval', $value);
+                    }
                     $args['meta_query'][] = $this->build_meta_query($filter_config, $value);
                     break;
                 case 'page':
@@ -562,6 +591,9 @@ class Nader_Woocommerce_Ajax_Filters{
 
         if (!empty($args['tax_query'])) {
             $args['tax_query']['relation'] = 'AND';
+        }
+        if (!empty($args['meta_query'])) {
+            $args['meta_query']['relation'] = 'AND';
         }
 
         ob_start();
