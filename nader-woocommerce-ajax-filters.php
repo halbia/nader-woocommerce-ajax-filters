@@ -396,6 +396,13 @@ class Nader_Woocommerce_Ajax_Filters{
 
     private function build_orderby(&$args, $orderby)
     {
+        // لیست مقادیر مجاز
+        $allowed = ['price', 'date', 'price-desc', 'menu_order', 'rating', 'popularity'];
+
+        if (!in_array($orderby, $allowed)) {
+            $orderby = 'date'; // مقدار پیش‌فرض
+        }
+
         switch ($orderby) {
             case 'price':
                 $args['meta_key'] = '_price';
@@ -408,6 +415,7 @@ class Nader_Woocommerce_Ajax_Filters{
                 $args['order'] = 'DESC';
                 break;
             case 'menu_order':
+            case 'date':
                 $args['orderby'] = 'date';
                 $args['order'] = 'DESC';
                 break;
